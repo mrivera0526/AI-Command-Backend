@@ -3,23 +3,18 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const { OpenAI } = require('openai');
 
-// Load environment variables
 dotenv.config();
 
-// Create Express app
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// API Route
 app.post('/api/chat', async (req, res) => {
   try {
     const userMessage = req.body.message;
@@ -64,6 +59,12 @@ app.post('/api/chat', async (req, res) => {
     console.error("❌ Server error:", err);
     res.status(500).json({ error: 'Something went wrong.' });
   }
+});
+
+app.get('/', (req, res) => {
+  res.send('AI Command Backend is live 🚀');
+});
+
 app.listen(port, () => {
   console.log(`✅ Backend running on http://localhost:${port}`);
 });
