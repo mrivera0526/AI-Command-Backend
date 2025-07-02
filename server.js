@@ -1,7 +1,7 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const { OpenAI } = require('openai');
+const express = require(\'express\');
+const dotenv = require(\'dotenv\');
+const cors = require(\'cors\');
+const { OpenAI } = require(\'openai\');
 
 dotenv.config();
 
@@ -15,7 +15,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-app.post('/api/chat', async (req, res) => {
+app.post(\'/api/chat\', async (req, res) => {
   try {
     const userMessage = req.body.message;
     console.log("🟢 Received user message:", userMessage);
@@ -44,9 +44,9 @@ app.post('/api/chat', async (req, res) => {
     while (!completed) {
       runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
 
-      if (runStatus.status === 'completed') {
+      if (runStatus.status === \'completed\') {
         completed = true;
-      } else if (['failed', 'cancelled', 'expired'].includes(runStatus.status)) {
+      } else if ([\'failed\', \'cancelled\', \'expired\'].includes(runStatus.status)) {
         throw new Error(`Run failed with status: ${runStatus.status}`);
       } else {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -56,24 +56,22 @@ app.post('/api/chat', async (req, res) => {
     // ✅ Retrieve and format assistant reply
     const messages = await openai.beta.threads.messages.list(threadId);
     const reply = messages.data
-      .filter(msg => msg.role === 'assistant')
-      .map(msg => msg.content?.[0]?.text?.value || '')
+      .filter(msg => msg.role === \'assistant\')
+      .map(msg => msg.content?.[0]?.text?.value || \'\')
       .join("\n");
 
     console.log("✅ Final reply:", reply);
     res.json({ reply });
   } catch (err) {
     console.error("❌ Server error:", err);
-    res.status(500).json({ error: 'Something went wrong. Check server logs.' });
+    res.status(500).json({ error: \'Something went wrong. Check server logs.\' });
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('AI Command Backend is live 🚀');
+app.get(\'/\', (req, res) => {
+  res.send(\'AI Command Backend is live 🚀\');
 });
 
 app.listen(port, () => {
-  console.log(`✅ Backend running on http://localhost:${port}`);
+  console.log(`✅ Backend running on http://localhost:${port}` );
 });
-
-
