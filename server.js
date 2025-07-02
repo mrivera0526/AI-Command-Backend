@@ -21,7 +21,8 @@ app.post('/api/chat', async (req, res) => {
     console.log("🟢 Received user message:", userMessage);
 
     // ✅ Thread created
-    const { id: threadId } = await openai.beta.threads.create();
+    const thread = await openai.beta.threads.create();
+    const threadId = thread.id;
     console.log("🧵 Thread ID:", threadId);
 
     // ✅ Add message to thread
@@ -31,9 +32,10 @@ app.post('/api/chat', async (req, res) => {
     });
 
     // ✅ Create run
-    const { id: runId } = await openai.beta.threads.runs.create(threadId, {
+    const run = await openai.beta.threads.runs.create(threadId, {
       assistant_id: process.env.ASSISTANT_ID,
     });
+    const runId = run.id;
     console.log("🚀 Run ID:", runId);
 
     // ✅ Wait for run to complete
