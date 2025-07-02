@@ -39,9 +39,16 @@ await openai.beta.threads.messages.create(thread.id, {
   content: userMessage,
 });
 
-    const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: process.env.ASSISTANT_ID,
-    });
+  let run;
+try {
+  run = await openai.beta.threads.runs.create(thread.id, {
+    assistant_id: process.env.ASSISTANT_ID,
+  });
+  console.log("🚀 Run created:", run.id);
+} catch (runError) {
+  console.error("❌ Failed to create run:", runError);
+  return res.status(500).json({ error: "Failed to create assistant run." });
+}
 
     let completed = false;
     let runStatus = null;
