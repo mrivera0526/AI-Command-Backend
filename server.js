@@ -20,51 +20,57 @@ app.post('/api/chat', async (req, res) => {
     const userMessage = req.body.message;
     console.log("🟢 Received user message:", userMessage);
 
+    // Step 1: Create thread
     let thread;
-try {
-  thread = await openai.beta.threads.create();
-  console.log("🧵 Thread created:", thread.id);
-} catch (threadError) {
-  console.error("❌ Failed to create thread:", threadError);
-  return res.status(500).json({ error: "Failed to create assistant thread." });
-}
+    try {
+      thread = await openai.beta.threads.create();
+      console.log("🧵 Thread created:", thread.id);
+    } catch (threadError) {
+      console.error("❌ Failed to create thread:", threadError);
+      return res.status(500).json({ error: "Failed to create assistant thread." });
+    }
 
-if (!thread?.id) {
-  console.error("❌ Thread ID is missing or undefined.");
-  return res.status(500).json({ error: "Thread ID is missing." });
-}
+    const threadId = thread?.id;
+    if (!threadId) {
+      console.error("❌ Thread ID is missing or undefined.");
+      return res.status(500).json({ error: "Thread ID is missing." });
+    }
 
-await openai.beta.threads.messages.create(thread.id, {
-  role: "user",
-  content: userMessage,
-});
+    // Step 2: Add user message to thread
+    await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: userMessage,
+    });
 
-  let run;
-try {
-  run = await openai.beta.threads.runs.create(thread.id, {
-    assistant_id: process.env.ASSISTANT_ID,
-  });
-  console.log("🚀 Run created:", run.id);
-} catch (runError) {
-  console.error("❌ Failed to create run:", runError);
-  return res.status(500).json({ error: "Failed to create assistant run." });
-}
+    // Step 3: Run assistant
+    let run;
+    try {
+      run = await openai.beta.threads.runs.create(threadId, {
+        assistant_id: process.env.ASSISTANT_ID,
+      });
+      console.log("🚀 Run created:", run.id);
+    } catch (runError) {
+      console.error("❌ Failed to create run:", runError);
+      return res.status(500).json({ error: "Failed to create assistant run." });
+    }
 
+    // Step 4: Poll for run completion
     let completed = false;
     let runStatus = null;
 
     while (!completed) {
-      runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+      runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
       if (runStatus.status === 'completed') {
         completed = true;
       } else if (['failed', 'cancelled', 'expired'].includes(runStatus.status)) {
         throw new Error('Assistant run failed.');
       } else {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // wait 1s before retry
       }
     }
 
-    const messages = await openai.beta.threads.messages.list(thread.id);
+    // Step 5: Get final assistant reply
+    const messages = await openai.beta.threads.messages.list(threadId);
     console.log("📩 All assistant messages:", JSON.stringify(messages.data, null, 2));
 
     const reply = messages.data
@@ -73,8 +79,8 @@ try {
       .join("\n");
 
     console.log("✅ Final reply:", reply);
-
     res.json({ reply });
+
   } catch (err) {
     console.error("❌ Server error:", err);
     res.status(500).json({ error: 'Something went wrong.' });
