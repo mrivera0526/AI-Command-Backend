@@ -20,9 +20,8 @@ app.post('/api/chat', async (req, res) => {
     const userMessage = req.body.message;
     console.log("🟢 Received user message:", userMessage);
 
-    // ✅ Create thread and store ID
-    const thread = await openai.beta.threads.create();
-    const threadId = thread.id;
+    // ✅ Thread created
+    const { id: threadId } = await openai.beta.threads.create();
     console.log("🧵 Thread ID:", threadId);
 
     // ✅ Add message to thread
@@ -31,17 +30,15 @@ app.post('/api/chat', async (req, res) => {
       content: userMessage,
     });
 
-    // ✅ Create a run and store ID
-    const run = await openai.beta.threads.runs.create(threadId, {
+    // ✅ Create run
+    const { id: runId } = await openai.beta.threads.runs.create(threadId, {
       assistant_id: process.env.ASSISTANT_ID,
     });
-    const runId = run.id;
     console.log("🚀 Run ID:", runId);
 
-    // ✅ Poll for completion
+    // ✅ Wait for run to complete
     let completed = false;
     let runStatus;
-
     while (!completed) {
       runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
 
@@ -50,20 +47,19 @@ app.post('/api/chat', async (req, res) => {
       } else if (['failed', 'cancelled', 'expired'].includes(runStatus.status)) {
         throw new Error(`Run failed with status: ${runStatus.status}`);
       } else {
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
-    // ✅ Retrieve reply messages
+    // ✅ Retrieve and format assistant reply
     const messages = await openai.beta.threads.messages.list(threadId);
-    const assistantReply = messages.data
+    const reply = messages.data
       .filter(msg => msg.role === 'assistant')
       .map(msg => msg.content?.[0]?.text?.value || '')
       .join("\n");
 
-    console.log("✅ Final reply:", assistantReply);
-    res.json({ reply: assistantReply });
-
+    console.log("✅ Final reply:", reply);
+    res.json({ reply });
   } catch (err) {
     console.error("❌ Server error:", err);
     res.status(500).json({ error: 'Something went wrong. Check server logs.' });
