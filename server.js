@@ -64,5 +64,6 @@ app.post('/api/chat', async (req, res) => {
     console.error("❌ Server error:", err);
     res.status(500).json({ error: 'Something went wrong.' });
   }
+app.listen(port, () => {
+  console.log(`✅ Backend running on http://localhost:${port}`);
 });
-
