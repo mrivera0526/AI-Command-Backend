@@ -20,11 +20,24 @@ app.post('/api/chat', async (req, res) => {
     const userMessage = req.body.message;
     console.log("🟢 Received user message:", userMessage);
 
-    const thread = await openai.beta.threads.create();
-    await openai.beta.threads.messages.create(thread.id, {
-      role: "user",
-      content: userMessage,
-    });
+    let thread;
+try {
+  thread = await openai.beta.threads.create();
+  console.log("🧵 Thread created:", thread.id);
+} catch (threadError) {
+  console.error("❌ Failed to create thread:", threadError);
+  return res.status(500).json({ error: "Failed to create assistant thread." });
+}
+
+if (!thread?.id) {
+  console.error("❌ Thread ID is missing or undefined.");
+  return res.status(500).json({ error: "Thread ID is missing." });
+}
+
+await openai.beta.threads.messages.create(thread.id, {
+  role: "user",
+  content: userMessage,
+});
 
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: process.env.ASSISTANT_ID,
