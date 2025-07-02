@@ -22,7 +22,7 @@ app.post('/api/chat', async (req, res) => {
 
     // ✅ Thread created
     const thread = await openai.beta.threads.create();
-    const threadId = thread.id;
+    const threadId = thread.id; // Explicitly assign threadId
     console.log("🧵 Thread ID:", threadId);
 
     // ✅ Add message to thread
@@ -35,7 +35,7 @@ app.post('/api/chat', async (req, res) => {
     const run = await openai.beta.threads.runs.create(threadId, {
       assistant_id: process.env.ASSISTANT_ID,
     });
-    const runId = run.id;
+    const runId = run.id; // Explicitly assign runId
     console.log("🚀 Run ID:", runId);
 
     // ✅ Wait for run to complete
@@ -75,3 +75,5 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`✅ Backend running on http://localhost:${port}`);
 });
+
+
